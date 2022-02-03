@@ -1,19 +1,20 @@
 import requests
+from bs4 import BeautifulSoup
 
 LINK = 'https://tempmailo.com/'
 GET_EMAIL_LINK = 'https://tempmailo.com/changemail'
-TOKEN_NAME='.AspNetCore.Antiforgery.dXyz_uFU2og'
+COOKIE_TOKEN_NAME='.AspNetCore.Antiforgery.dXyz_uFU2og'
 
 # to get the verification token
 # document.getElementsByName("__RequestVerificationToken")[0].value
 
-def generate_headers(token):
+
+def generate_headers(cookie, token):
     return {
         'accept': 'application/json, text/plain, */*',
-        'accept-encoding': 'gzip, deflate, br',
         'accept-language': 'en-US,en;q=0.9',
         'authority': 'tempmailo.com',
-        'cookie': f'{TOKEN_NAME}={token}',
+        'cookie': f'{COOKIE_TOKEN_NAME}={cookie}',
         'method': 'GET',
         'path': '/changemail?_r=0.010305999329898174',
         'referer': 'https://tempmailo.com/',
@@ -34,29 +35,31 @@ class TempMail(object):
     def __init__(self):
         self.email = ''
         self.mails = []
-        self.token = None
-        self.get_token()
+        self.cookie_token = None
+        self.verification_token = None
+        self.get_tokens()
         self.get_email_address()
 
     def __repr__(self):
         return f'<TempMail [{self.email}]>'
 
-    def get_token(self):
+    def get_tokens(self):
         r = requests.get(LINK)
-        self.token = r.cookies[TOKEN_NAME]
+        self.cookie_token = r.cookies[COOKIE_TOKEN_NAME]
+        soup = BeautifulSoup(r.content, 'html.parser')
+        t = soup.find('input', {'name': '__RequestVerificationToken'})
+        self.verification_token = t.get('value')
 
     def get_email_address(self):
-        print(generate_headers(self.token))
-        r = requests.get(GET_EMAIL_LINK, headers=generate_headers(self.token))
-        print(r.status_code)
+        headers = generate_headers(self.cookie_token, self.verification_token)
+        r = requests.get(GET_EMAIL_LINK, headers=headers)
         self.email = r.text
-        return r
 
     def get_mailbox(self):
-        headers = generate_headers('CfDJ8Eg0UXBf4GFKnlq0xAV8GmN0PchciDeWXdp40xM10pFC3-eHhjaFfTlo35_pcSCC5PFRHCTcd5oUX3OrbgYAVS2ws4xSo2RwHjDWqXv1P534iSF_AcIR6dnsY8pu2PvNNYv6n2Ghj-8sz3K4hd9Ou4M')
+        headers = generate_headers(self.cookie_token, self.verification_token)
         headers['content-type'] = 'application/json;charset=UTF-8'
         payload = {
             "mail": self.email
         }
-        r = requests.post(LINK, headers=headers, data=payload)
+        r = requests.post(LINK, headers=headers, json=payload)
         self.mails = r.json()
