@@ -3,13 +3,14 @@ import json
 from datetime import datetime
 
 link = 'https://www.instagram.com/accounts/login/'
+email_signup = 'https://www.instagram.com/accounts/emailsignup/'
 login_url = 'https://www.instagram.com/accounts/login/ajax/'
 signup_url = 'https://www.instagram.com/accounts/web_create_ajax/attempt/'
 sendemail_url = 'https://i.instagram.com/api/v1/accounts/send_verify_email/'
 
 # Need a method to get this
+# found it! in the cookies
 device_id = 'YfptlgAEAAF3YdL7N_0DXZMplxB_'
-
 
 def send_email(email):
     response = requests.get(link)
