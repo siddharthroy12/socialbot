@@ -3,10 +3,7 @@ from bs4 import BeautifulSoup
 
 LINK = 'https://tempmailo.com/'
 GET_EMAIL_LINK = 'https://tempmailo.com/changemail'
-COOKIE_TOKEN_NAME='.AspNetCore.Antiforgery.dXyz_uFU2og'
-
-# to get the verification token
-# document.getElementsByName("__RequestVerificationToken")[0].value
+COOKIE_TOKEN_NAME = '.AspNetCore.Antiforgery.dXyz_uFU2og'
 
 
 def generate_headers(cookie, token):
@@ -28,7 +25,7 @@ def generate_headers(cookie, token):
         'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
-   }
+    }
 
 
 class TempMail(object):
@@ -38,7 +35,7 @@ class TempMail(object):
         self.cookie_token = None
         self.verification_token = None
         self.get_tokens()
-        self.get_email_address()
+        self.get_new_email_address()
 
     def __repr__(self):
         return f'<TempMail [{self.email}]>'
@@ -50,12 +47,12 @@ class TempMail(object):
         t = soup.find('input', {'name': '__RequestVerificationToken'})
         self.verification_token = t.get('value')
 
-    def get_email_address(self):
+    def get_new_email_address(self):
         headers = generate_headers(self.cookie_token, self.verification_token)
         r = requests.get(GET_EMAIL_LINK, headers=headers)
         self.email = r.text
 
-    def get_mailbox(self):
+    def update_mails(self):
         headers = generate_headers(self.cookie_token, self.verification_token)
         headers['content-type'] = 'application/json;charset=UTF-8'
         payload = {
