@@ -22,7 +22,7 @@ def generate_headers(csrf_token):
 
 class Instagram(object):
     def __init__(self):
-        self.verfied = False
+        self.verified = False
         self.session_id = '' # This is when logged in
         self.username = ''
         self.name = ''
@@ -49,7 +49,6 @@ class Instagram(object):
                                        headers=generate_headers(self.csrf_token))
 
         json_data = json.loads(login_response.text)
-        print(json_data)
 
         if json_data["authenticated"]:
             cookies = login_response.cookies
@@ -57,8 +56,9 @@ class Instagram(object):
             csrf_token = cookie_jar['csrftoken']
             session_id = cookie_jar['sessionid']
 
-            this.session_id = session_id
-            this.csrf_token = csrf_token
+            self.session_id = session_id
+            self.csrf_token = csrf_token
+            self.verified = True
 
         else:
             raise Exception("Failed to login")
@@ -131,17 +131,21 @@ class Instagram(object):
             raise Exception('Failed to confirm code')
         else:
             self.signup_code = json_data['signup_code']
+            self.force_signup()
 
     def force_signup(self):
+        """ After email code in confirmed this is the last stage """
+        time = int(datetime.now().timestamp())
+
         payload = {
             "enc_password": f'#PWD_INSTAGRAM_BROWSER:0:{time}:{self.password}',
             "email": self.email,
             "username": self.username,
             "first_name": self.name,
-            "month": 9,
+            "month": 9, # Month days year should be random
             "day": 4,
             "year":  1975,
-            "client_id": self.client_id,
+            "client_id": self.device_id,
             "seamless_login_enabled": 1,
             "tos_version": "row",
             "force_sign_up_code": self.signup_code
@@ -156,7 +160,13 @@ class Instagram(object):
                                  data=payload,
                                  cookies=cookies,
                                  headers=generate_headers(self.csrf_token))
-        return response
+
+        json_data = response.json()
+
+        if "account_created" in json_data and json_data["account_created"]:
+            self.login(self.username, self.password)
+        else:
+            raise Exception('Failed to force signup')
 
     def get_device_id_and_csrf_token(self):
         """ Get device_id and csrf_token from cookies for authentication """
