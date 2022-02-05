@@ -1,6 +1,7 @@
 import requests
 import json
 from datetime import datetime
+from bs4 import BeautifulSoup
 
 link = 'https://www.instagram.com/accounts/login/'
 email_signup = 'https://www.instagram.com/accounts/emailsignup/'
@@ -9,6 +10,7 @@ signup_url = 'https://www.instagram.com/accounts/web_create_ajax/attempt/'
 sendemail_url = 'https://i.instagram.com/api/v1/accounts/send_verify_email/'
 confirm_code_url = 'https://i.instagram.com/api/v1/accounts/check_confirmation_code/'
 force_signup_url = 'https://www.instagram.com/accounts/web_create_ajax/'
+like_post_url = 'https://www.instagram.com/web/likes/target/like/'
 
 
 def generate_headers(csrf_token):
@@ -33,6 +35,7 @@ class Instagram(object):
         self.get_device_id_and_csrf_token()
 
     def login(self, username, password):
+        """ Login user with username and password """
         self.username = username
         self.password = password
         time = int(datetime.now().timestamp())
@@ -64,6 +67,7 @@ class Instagram(object):
             raise Exception("Failed to login")
 
     def signup(self, name, email, username, password):
+        """ Signup user with name, email, username and password """
         self.name = name
         self.username = username
         self.password = password
@@ -162,6 +166,7 @@ class Instagram(object):
                                  headers=generate_headers(self.csrf_token))
 
         json_data = response.json()
+        print(json_data)
 
         if "account_created" in json_data and json_data["account_created"]:
             self.login(self.username, self.password)
@@ -174,3 +179,33 @@ class Instagram(object):
         response = requests.get(link)
         self.csrf_token = response.cookies['csrftoken']
         self.device_id = response.cookies['mid']
+
+    @staticmethod
+    def get_post_id(post_link):
+        """ Get post id from post link to perform like, comment, etc """
+        r = requests.get(post_link)
+        soup = BeautifulSoup(r.text, features="html.parser")
+        meta_element = soup.find('meta', {'property': "al:ios:url"})
+        content = meta_element.get('content')
+        return content[21:]
+
+    def like_post(self, post_link):
+        """ Like post for given url """
+
+        post_id = self.get_post_id(post_link)
+
+        headers = generate_headers(self.csrf_token)
+
+        cookies = {
+            "mid": self.device_id,
+            "csrftoken": self.csrf_token,
+            "sessionid": self.session_id,
+        }
+
+        r = requests.post(like_post_url.replace('target', post_id),
+                          headers={**headers, **cookies},
+                          cookies=cookies)
+        print(r.text)
+
+        if '{"status": "ok"}' not in r.text:
+            raise Exception('Failed to like post')

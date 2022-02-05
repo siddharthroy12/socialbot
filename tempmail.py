@@ -23,6 +23,5 @@ class TempMail(object):
             raise Exception('Failed to get email')
 
     def update_mails(self):
-        print(GET_MESSAGES_LINK.replace('target', self.email))
         r = requests.get(GET_MESSAGES_LINK.replace('target', self.email))
         self.mails = r.json()
