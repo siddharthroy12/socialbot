@@ -3,12 +3,23 @@ from faker import Faker
 from instagram import Instagram
 from tempmail import TempMail
 
-DESCLAIMER_NOTE = """
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+DESCLAIMER_NOTE = f"""{bcolors.WARNING}
 Please Note that this is a research project.
 I am by no means responsible for any usage of this tool.
 Use on your own behalf.
 I'm also not responsible if your accounts get banned
-due to extensive use of this tool.
+due to extensive use of this tool.{bcolors.ENDC}
 """
 
 
